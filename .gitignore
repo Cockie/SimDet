@@ -1,0 +1,10 @@
+*.pdf
+*.autosave
+*.config
+*.creator
+*.files
+*.user
+*.includes
+*.so
+*.d
+*.pcm
