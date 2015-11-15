@@ -10,27 +10,31 @@
 #include <TBenchmark.h>
 #include <TDirectory.h>
 #include <iostream>
+#include <math.h>
 
+#include "parton.h"
+TFile *file = new TFile("pdfHistograms.root","read");
+file->cd();
+// print what is in the file:
+file->ls();
+
+// get the histograms out. There are five.
+
+TH2D *histoAUp = (TH2D*) file->Get("histoAUp");
+TH2D *histoUp = (TH2D*) file->Get("histoUp");
+TH2D *histoGluon = (TH2D*) file->Get("histoGluon");
+TH2D *histoADown = (TH2D*) file->Get("histoADown");
+TH2D *histoDown = (TH2D*) file->Get("histoDown");
+TRandom3 random;
 
 void project(){ // function with the same name as the .C file is automatically executed by root.
-    TFile *file = new TFile("pdfHistograms.root","read");
-    file->cd();
-    // print what is in the file:
-    file->ls();
 
-    // get the histograms out. There are five.
-
-    TH2D *histoAUp = (TH2D*) file->Get("histoAUp");
-    TH2D *histoUp = (TH2D*) file->Get("histoUp");
-    TH2D *histoGluon = (TH2D*) file->Get("histoGluon");
-    TH2D *histoADown = (TH2D*) file->Get("histoADown");
-    TH2D *histoDown = (TH2D*) file->Get("histoDown");
     Int_t ybin = histoDown->GetYaxis()->FindBin(90);
     TH1D* histo= histoDown->ProjectionX("Up",ybin,ybin+1);
     //histoGluon->FitSlicesX(0, ybin, ybin,0);
     //gDirectory->ls();
     //TH1D* histo = (TH1D*)gDirectory->Get("histoGluon_0");
-    TRandom3 random;
+
     TCanvas *c1 = new TCanvas("c1","The Uniform random example");
     /* Step:
      * 1. Create 2 partons with 2 x
@@ -39,8 +43,7 @@ void project(){ // function with the same name as the .C file is automatically e
      */
     double _q=90.;
     //step 1: generate 2 x'es
-    double x1=random.Uniform(0,1);
-    double x2=random.Uniform(0,1);
+    double part1=Parton(random);    
 
     c1->cd();//make sure you plot on the right canvas
     histoDown->Draw();
@@ -55,6 +58,12 @@ double sigma(){
 
 }
 
+Parton make_parton(){
+    double x=random.Uniform(0,1);
+    Int_t ybin = histoDown->GetYaxis()->FindBin(90);
+    Int_t xbin = histoDown->GetXaxis()->FindBin(-10*log10(x));
+    doube fAUp =
+}
 
 
 

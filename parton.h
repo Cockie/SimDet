@@ -1,6 +1,7 @@
 #ifndef PARTON_H
 #define PARTON_H
 #include <string>
+#include <TRandom3.h>
 using namespace std;
 class Parton
 {
