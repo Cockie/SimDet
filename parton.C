@@ -7,3 +7,10 @@ Parton::Parton(double x, string type)
     _type=type;
 
 }
+
+Parton::Parton()
+{
+    _x=0;
+    _type="type";
+
+}

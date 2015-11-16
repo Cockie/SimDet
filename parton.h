@@ -5,11 +5,12 @@
 using namespace std;
 class Parton
 {
-public:
+private:
 public:
     double _x;
     string _type;
     Parton(double x, string type);
+    Parton();
 };
 
 #endif // PARTON_H

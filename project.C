@@ -9,60 +9,114 @@
 #include <TRandom3.h>
 #include <TBenchmark.h>
 #include <TDirectory.h>
+#include <TLorentzVector.h>
 #include <iostream>
 #include <math.h>
-
+#include "hists.h"
 #include "parton.h"
+using namespace std;
+
 TFile *file = new TFile("pdfHistograms.root","read");
-file->cd();
-// print what is in the file:
-file->ls();
-
-// get the histograms out. There are five.
-
-TH2D *histoAUp = (TH2D*) file->Get("histoAUp");
-TH2D *histoUp = (TH2D*) file->Get("histoUp");
-TH2D *histoGluon = (TH2D*) file->Get("histoGluon");
-TH2D *histoADown = (TH2D*) file->Get("histoADown");
-TH2D *histoDown = (TH2D*) file->Get("histoDown");
-TRandom3 random;
+hists histos(file);
+TRandom3 rng;
+double q=90.;
 
 void project(){ // function with the same name as the .C file is automatically executed by root.
-
-    Int_t ybin = histoDown->GetYaxis()->FindBin(90);
-    TH1D* histo= histoDown->ProjectionX("Up",ybin,ybin+1);
+    rng.SetSeed(0);
+    //Int_t ybin = histos.histoDown->GetYaxis()->FindBin(90);
+   // TH1D* histo= histos.histoDown->ProjectionX("Up",ybin,ybin+1);
     //histoGluon->FitSlicesX(0, ybin, ybin,0);
     //gDirectory->ls();
     //TH1D* histo = (TH1D*)gDirectory->Get("histoGluon_0");
 
-    TCanvas *c1 = new TCanvas("c1","The Uniform random example");
+    //TCanvas *c1 = new TCanvas("c1","The Uniform random example");
     /* Step:
      * 1. Create 2 partons with 2 x
      * 2. Let partons create W/Z boson somehow
      * 3. Let W/Z boson decay
      */
-    double _q=90.;
+    double fmax=get_max();
     //step 1: generate 2 x'es
-    double part1=Parton(random);    
+    Parton part1=make_parton(fmax);
+    Parton part2=make_parton(fmax);
+    cout<<"part1 "<<part1._type<<" "<<part1._x<<endl;
+    cout<<"part2 "<<part2._type<<" "<<part2._x<<endl;
+    TLorentzVector vec1;
+    vec1.SetPx(q*part1._x);
+    vec1.SetE(q*part1._x);
+    TLorentzVector vec2;
+    vec2.SetPx(-q*part2._x);
+    vec2.SetE(q*part2._x);
+    TLorentzVector vecW=vec1+vec2;
+    cout<<vecW.Px()<<" "<<vecW.E()<<endl;
 
+
+    //if (part1._type ==& part2)
+    /*TH1D *histo = new TH1D("Up_test","histogram of uniform distribution",200,0,1);
+    int prod=0;
+    while (prod<5000){
+        Parton part=make_parton(fmax);
+        if (part._type=="ADown"){
+            histo->Fill(part._x);
+            prod++;
+            if(prod%100==0){
+                cout<<prod<<endl;
+            }
+        }
+
+    }
     c1->cd();//make sure you plot on the right canvas
-    histoDown->Draw();
-    histoDown->SetMinimum(0);
-    c1->Update();
+    histo->Draw();
+    histo->SetMinimum(0);
+    c1->Update();*/
 
 }
 //cross section
 double sigma(){
     //to be filled in
     return 1.0;
-
 }
 
-Parton make_parton(){
-    double x=random.Uniform(0,1);
-    Int_t ybin = histoDown->GetYaxis()->FindBin(90);
-    Int_t xbin = histoDown->GetXaxis()->FindBin(-10*log10(x));
-    doube fAUp =
+Parton make_parton(double fmax){
+    double x=rng.Uniform(0,1);
+    Int_t ybin = histos.histoDown->GetYaxis()->FindBin(q);
+    Int_t xbin = histos.histoDown->GetXaxis()->FindBin(-10*log10(x));
+    double fAUp = histos.histoAUp->GetBinContent(xbin,ybin);
+    double fUp = histos.histoUp->GetBinContent(xbin,ybin);
+    double fADown = histos.histoADown->GetBinContent(xbin,ybin);
+    double fDown = histos.histoDown->GetBinContent(xbin,ybin);
+    double fGluon = histos.histoGluon->GetBinContent(xbin,ybin);
+
+    double f=rng.Uniform(0,fmax);
+    if(f>=fAUp+fUp+fADown+fDown+fGluon){
+        return make_parton(fmax);
+    }else if(f>=fAUp+fUp+fADown+fDown){
+        return Parton(x,"Gluon");
+    }else if(f>=fAUp+fUp+fADown){
+        return Parton(x,"Down");
+    }else if(f>=fAUp+fUp){
+        return Parton(x,"ADown");
+    }else if(f>=fAUp){
+        return Parton(x,"Up");
+    }else{
+        return Parton(x,"AUp");
+    }
+}
+
+double get_max(){
+    Int_t ybin = histos.histoDown->GetYaxis()->FindBin(q);
+    Int_t xmax = histos.histoDown->GetXaxis()->GetNbins();
+    double fmax=0;
+    for(int xbin=0;xbin<=xmax;xbin++){
+        double f= histos.histoAUp->GetBinContent(xbin,ybin)+histos.histoUp->GetBinContent(xbin,ybin)+histos.histoADown->GetBinContent(xbin,ybin)+histos.histoDown->GetBinContent(xbin,ybin)+histos.histoGluon->GetBinContent(xbin,ybin);
+        if (f>fmax){
+            fmax=f;
+        }
+    }
+    cout<<fmax<<endl;
+    return fmax;
+
+
 }
 
 
