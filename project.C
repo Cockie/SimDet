@@ -63,6 +63,8 @@ void project(){ // function with the same name as the .C file is automatically e
                         //make Z
                         histoZ->Fill(q);
                         cout<<"Z "<<endl;
+                        //decay
+
                     }
                     //correct types for W+
                 }else if((part1._type=="Up" && part2._type=="ADown")||(part1._type=="ADown" && part2._type=="Up")){
