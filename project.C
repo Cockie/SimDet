@@ -30,28 +30,29 @@ void project(){ // function with the same name as the .C file is automatically e
     //TH1D* histo = (TH1D*)gDirectory->Get("histoGluon_0");
 
     TCanvas *c1 = new TCanvas("c1","The Uniform random example");
-    TH1D *histoZ = new TH1D("Z","histogram of uniform distribution",200,100,1000);
-    TH1D *histoWp = new TH1D("W+","histogram of uniform distribution",200,100,1000);
-    TH1D *histoWm = new TH1D("W-","histogram of uniform distribution",200,100,1000);
+    TH1D *histoZ = new TH1D("Z","histogram of uniform distribution",80,50,200);
+    TH1D *histoWp = new TH1D("W+","histogram of uniform distribution",80,50,200);
+    TH1D *histoWm = new TH1D("W-","histogram of uniform distribution",80,50,200);
     /* Step:
      * 1. Create 2 partons with 2 x
      * 2. Let partons create W/Z boson somehow
      * 3. Let W/Z boson decay
      */
+    double Etot=6500;
     double fmax=get_max();
-    for(q=100;q<=1000;++q){
-        for(int n=0;n<100000;++n){
+    for(q=80;q<=100;++q){
+        for(int n=0;n<10000;++n){
             //step 1: generate 2 x'es
             Parton part1=make_parton(fmax);
             Parton part2=make_parton(fmax);
             //cout<<"part1 "<<part1._type<<" "<<part1._x<<endl;
             //cout<<"part2 "<<part2._type<<" "<<part2._x<<endl;
             TLorentzVector vec1;
-            vec1.SetPx(q*part1._x);
-            vec1.SetE(q*part1._x);
+            vec1.SetPx(Etot*part1._x);
+            vec1.SetE( Etot*part1._x );
             TLorentzVector vec2;
-            vec2.SetPx(-q*part2._x);
-            vec2.SetE(q*part2._x);
+            vec2.SetPx(-Etot*part2._x);
+            vec2.SetE( Etot*part2._x );
             TLorentzVector vecW=vec1+vec2;
             //cout<<vecW.Px()<<" "<<vecW.E()<<endl;
             if (vecW.E()>=80.385){
@@ -150,48 +151,3 @@ double get_max(){
 
 
 }
-
-
-
-//void fillrandomUniform(Int_t ntimes) {
-//   //Fill a 1-D histogram from a uniform function
-   
-//    TCanvas *c1 = new TCanvas("c1","The Uniform random example");
-////    TCanvas *c2 = new TCanvas("c2","the cross-check");
-
-//    gBenchmark->Start("fillrandom");// this measures the time between now and the next gBenchmark of "fillrandom"
-
-//    // create a histogram
-//    TH1F *histo = new TH1F("histo","histogram of uniform distribution",100,0,1);
-//    //TH3F *histo3d = new TH3F("histo3d","3D histogram for check of random generator",1000,0,1,1000,0,1,1000,0,1);
-    
-//   // create a random generator object. Advisable one to use is TRandom3. Other options are TRandom2 and TRandom1. DO NOT USE TRandom (so without a number) as it has bugs and is old
-//   TRandom3 random;
-
-//    Int_t iterator;
-//    Float_t thisran,prevran,beforeran;
-//    for(iterator=0; iterator<ntimes; iterator++){
-//        // this is where you retrieve the random number
-//        if(iterator%1000==0)
-//            std::cout << iterator << "/" << ntimes << std::endl;
-//        thisran = random.Uniform(0,1);
-//        // and fill it into histograms
-//        histo->Fill(thisran);
-//      //  histo3d->Fill(thisran,prevran,beforeran);
-//        // save these for next loop:
-//        beforeran=prevran;
-//        prevran=thisran;
-        
-//    }
-
-//   // update the canvas so the plot shows
-//    c1->cd();//make sure you plot on the right canvas
-//    histo->Draw();
-//    histo->SetMinimum(0);
-//    c1->Update();
-//   // c2->cd();// make sure you plot on the right canvas
-//    //histo3d->Draw();
-//    //c2->Update();
-
-//   gBenchmark->Show("fillrandom"); // print out how long it took to run the program
-//}
