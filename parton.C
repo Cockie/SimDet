@@ -8,6 +8,7 @@ Parton::Parton(double x, string type)
 
 }
 
+
 Parton::Parton()
 {
     _x=0;
