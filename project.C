@@ -21,6 +21,8 @@ hists histos(file);
 TRandom3 rng;
 double q=90.;
 double zwidth=2.5;
+double emass=0.000510998946;
+double mumass=0.105658;
 
 void project(){ // function with the same name as the .C file is automatically executed by root.
     rng.SetSeed(0);
@@ -30,10 +32,14 @@ void project(){ // function with the same name as the .C file is automatically e
     //gDirectory->ls();
     //TH1D* histo = (TH1D*)gDirectory->Get("histoGluon_0");
 
-    TCanvas *c1 = new TCanvas("c1","The Uniform random example");
-    TH1D *histoZ = new TH1D("Z","histogram of uniform distribution",40,-3,3);
-    TH1D *histoWp = new TH1D("W+","histogram of uniform distribution",80,50,200);
-    TH1D *histoWm = new TH1D("W-","histogram of uniform distribution",80,50,200);
+    TCanvas *c1 = new TCanvas("c1","electron");
+    TCanvas *c2 = new TCanvas("c2","muon");
+    TH1D *histoZ = new TH1D("Z","electron",30,-3,3);
+    TH1D *histoZb = new TH1D("Z","muon",30,-3,3);
+    TH1D *histoWp = new TH1D("W+","electron",30,-3,3);
+    TH1D *histoWpb = new TH1D("W+","muon",30,-3,3);
+    TH1D *histoWm = new TH1D("W-","electron",30,-3,3);
+    TH1D *histoWmb = new TH1D("W-","muon",30,-3,3);
     /* Step:
      * 1. Create 2 partons with 2 x
      * 2. Let partons create W/Z boson somehow
@@ -41,6 +47,9 @@ void project(){ // function with the same name as the .C file is automatically e
      */
     double Etot=6500;
     double fmax=get_max();
+    int wp=0;
+    int wm=0;
+    int z=0;
     for(q=90;q<=90;++q){
         for(int n=0;n<100000;++n){
             if(n%1000==0){
@@ -64,33 +73,36 @@ void project(){ // function with the same name as the .C file is automatically e
                     //enough mass to make a Z
                     if (vecW.E()>=91.1876){
                         //make Z
-                        //cout<<"Z "<<endl;
+                        ++z;
                         //get the boost vector
                         TVector3 boost=vecW.BoostVector();
+
                         //boost system to com
                         vecW.Boost( -boost );
-                        //decay into stuff
 
+                        //decay into stuff
+                        //electron
                         double x=acos(2*rng.Uniform(0,1)-1);
                         double E=vecW.E()/2;
-                        //double P=sqrt(E*E-0.0005*0.0005);
-                        double P=sqrt(E*E-0.1*0.1);
-                        TLorentzVector veca(P*sin(x), P*cos(x),0,E );
-                        //veca.SetPx(E*sin(x));
-                        //veca.SetPy(E*cos(x));
-                        //veca.SetTheta(x);
-                        //veca.SetE( E);
-                        TLorentzVector vecb(-P*sin(x), -P*cos(x),0,E );
-                        //vecb.SetPx(-E*sin(x));
-                        //vecb.SetPy(-E*cos(x));
-                        //vecb.SetTheta(x+M_PI);
-                        //vecb.SetE( E);
+                        double P=sqrt(E*E-emass*emass);
+                        //double P=sqrt(E*E-0.1*0.1);
+                        TLorentzVector veca(0, P*sin(x),P*cos(x),E );
+                        TLorentzVector vecb(0, -P*sin(x),-P*cos(x),E );
+
                         veca.Boost(boost);
                         vecb.Boost(boost);
-                        veca.SetTheta(atan2(veca.Px(),veca.Py()));
-                        vecb.SetTheta(atan2(vecb.Px(),vecb.Py()));
                         histoZ->Fill(veca.PseudoRapidity());
                         histoZ->Fill(vecb.PseudoRapidity());
+                        //muon
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        P=sqrt(E*E-mumass*mumass);
+                        veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
+                        vecb=TLorentzVector(0, -P*sin(x),-P*cos(x),E );
+
+                        veca.Boost(boost);
+                        vecb.Boost(boost);
+                        histoZb->Fill(veca.PseudoRapidity());
+                        histoZb->Fill(vecb.PseudoRapidity());
 
 
                     }
@@ -98,14 +110,67 @@ void project(){ // function with the same name as the .C file is automatically e
                 }else if((part1._type=="Up" && part2._type=="ADown")||(part1._type=="ADown" && part2._type=="Up")){
                     if (vecW.E()>=80.385){
                         //make W+
-                        histoWp->Fill(q);
-                        //cout<<"Wp "<<endl;
+                        ++wp;
+                        TVector3 boost=vecW.BoostVector();
+
+                        //boost system to com
+                        vecW.Boost( -boost );
+
+                        //decay into stuff
+                        //electron
+                        double x=acos(2*rng.Uniform(0,1)-1);
+                        double E=(vecW.E()*vecW.E()+emass*emass)/(2*vecW.E());
+                        double P=sqrt(E*E-emass*emass);
+                        //double P=sqrt(E*E-0.1*0.1);
+                        TLorentzVector veca(0, P*sin(x),P*cos(x),E );
+
+                        veca.Boost(boost);;
+                        histoWp->Fill(veca.PseudoRapidity());
+                        /*//second electron
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        veca=TLorentzVector (0, P*sin(x),P*cos(x),E );
+
+                        veca.Boost(boost);;
+                        histoWp->Fill(veca.PseudoRapidity());*/
+                        //muon
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        E=(vecW.E()*vecW.E()+mumass*mumass)/(2*vecW.E());
+                        P=sqrt(E*E-mumass*mumass);
+                        veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
+
+                        veca.Boost(boost);
+                        histoWpb->Fill(veca.PseudoRapidity());
                     }
                 }else if((part1._type=="AUp" && part2._type=="Down")||(part1._type=="Down" && part2._type=="AUp")){
                     if (vecW.E()>=80.385){
                         //make W-
-                        histoWm->Fill(q);
-                        //cout<<"Wm "<<endl;
+                        ++wm;
+                        TVector3 boost=vecW.BoostVector();
+
+                        //boost system to com
+                        vecW.Boost( -boost );
+
+                        //decay into stuff
+                        //electron
+                        double x=acos(2*rng.Uniform(0,1)-1);
+                        double E=(vecW.E()*vecW.E()+emass*emass)/(2*vecW.E());
+                        double P=sqrt(E*E-emass*emass);
+                        TLorentzVector veca(0, P*sin(x),P*cos(x),E );
+                        veca.Boost(boost);;
+                        histoWm->Fill(veca.PseudoRapidity());
+                        /*//second
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
+                        veca.Boost(boost);;
+                        histoWm->Fill(veca.PseudoRapidity());*/
+                        //muon
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        E=(vecW.E()*vecW.E()+mumass*mumass)/(2*vecW.E());
+                        P=sqrt(E*E-mumass*mumass);
+                        veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
+
+                        veca.Boost(boost);
+                        histoWmb->Fill(veca.PseudoRapidity());
                     }
                 }
             }
@@ -128,11 +193,36 @@ void project(){ // function with the same name as the .C file is automatically e
         }
 
     }*/
-    c1->cd();//make sure you plot on the right canvas
-    histoZ->Draw();
-    histoZ->SetMinimum(0);
+    /*c1->cd();//make sure you plot on the right canvas
+    histoWm->Draw();
+    histoWm->SetMinimum(0);
     c1->Update();
 
+    c2->cd();//make sure you plot on the right canvas
+    histoWmb->Draw();
+    histoWmb->SetMinimum(0);
+    c2->Update();*/
+    cout<<"Z="<<z<<" Wmin="<<wm<<" Wplus="<<wp<<endl;
+    TH1D *ass = new TH1D("W-","electron",30,-3,3);
+    TH1D *ass_sub = new TH1D("W-","electron",30,-3,3);
+    TH1D *ass_sum = new TH1D("W-","electron",30,-3,3);
+    ass_sub->Add(histoWm, histoWp,-1,2);
+    ass_sum->Add(histoWm, histoWp,1,2);
+    ass->Divide(ass_sub, ass_sum);
+    c1->cd();//make sure you plot on the right canvas
+    ass->Draw();
+    ass->SetMinimum(0);
+    c1->Update();
+    TH1D *assb = new TH1D("W-","muon",30,-3,3);
+    TH1D *assb_sub = new TH1D("W-","muon",30,-3,3);
+    TH1D *assb_sum = new TH1D("W-","muon",30,-3,3);
+    assb_sub->Add(histoWmb, histoWpb,-1,2);
+    assb_sum->Add(histoWmb, histoWpb,1,2);
+    assb->Divide(assb_sub, assb_sum);
+    c2->cd();//make sure you plot on the right canvas
+    assb->Draw();
+    assb->SetMinimum(0);
+    c2->Update();
 }
 //cross section
 double sigma(){
