@@ -23,8 +23,14 @@ double q=90.;
 double zwidth=2.5;
 double emass=0.000510998946;
 double mumass=0.105658;
+double limit=3;
+int previous_anti=0;
+double lowPT=20;
+
 
 void project(){ // function with the same name as the .C file is automatically executed by root.
+    gBenchmark->Reset();
+    gBenchmark->Start("fillrandom");
     rng.SetSeed(0);
     //Int_t ybin = histos.histoDown->GetYaxis()->FindBin(90);
    // TH1D* histo= histos.histoDown->ProjectionX("Up",ybin,ybin+1);
@@ -34,17 +40,17 @@ void project(){ // function with the same name as the .C file is automatically e
     TCanvas *c1 = new TCanvas("c1","Asymetry electron");
     TCanvas *c2 = new TCanvas("c2","Asymetry muon");
     TCanvas *cz = new TCanvas("cz","Z electron");
-    TH1D *histoZ = new TH1D("Ze","Z electron",30,-10,10);
+    TH1D *histoZ = new TH1D("Ze","Z electron",30,-limit,limit);
     TCanvas *czb = new TCanvas("czb","Z muon");
-    TH1D *histoZb = new TH1D("Zm","Z muon",30,-10,10);
+    TH1D *histoZb = new TH1D("Zm","Z muon",30,-limit,limit);
     TCanvas *cwp = new TCanvas("cwp","Wp electron");
-    TH1D *histoWp = new TH1D("W+e","Wp electron",30,-10,10);
+    TH1D *histoWp = new TH1D("W+e","Wp electron",30,-limit,limit);
     TCanvas *cwpb = new TCanvas("cwpb","Wp muon");
-    TH1D *histoWpb = new TH1D("W+m","Wp muon",30,-10,10);
+    TH1D *histoWpb = new TH1D("W+m","Wp muon",30,-limit,limit);
     TCanvas *cwm = new TCanvas("cwm","Wm electron");
-    TH1D *histoWm = new TH1D("W-e","Wm electron",30,-10,10);
+    TH1D *histoWm = new TH1D("W-e","Wm electron",30,-limit,limit);
     TCanvas *cwmb = new TCanvas("cwmb","Wm muon");
-    TH1D *histoWmb = new TH1D("W-m","Wm muon",30,-10,10);
+    TH1D *histoWmb = new TH1D("W-m","Wm muon",30,-limit,limit);
     /* Step:
      * 1. Create 2 partons with 2 x
      * 2. Let partons create W/Z boson somehow
@@ -55,18 +61,24 @@ void project(){ // function with the same name as the .C file is automatically e
     int wp=0;
     int wm=0;
     int z=0;
+    double E=0;
+    double P=0;
+    double E1=0;
+    double E2=0;
+    double P1=0;
+    double P2=0;
+    double x=0;
     for(q=90;q<=90;++q){
-        for(int n=0;n<500000;++n){
-            if(n%1000==0){
+        for(int n=0;n<10000;++n){
+            if(n%100==0){
                 cout<<"n="<<n<<endl;}
             //step 1: generate 2 x'es
+            previous_anti=rng.Integer(2);
+            //cout<<previous_anti<<endl;
             Parton part1=make_parton(fmax);
-            Parton part2=make_parton(fmax);
             //cout<<"part1 "<<part1._type<<" "<<part1._x<<endl;
+            Parton part2=make_parton(fmax);
             //cout<<"part2 "<<part2._type<<" "<<part2._x<<endl;
-            //TLorentzVector vec1(0, 0,Etot*part1._x,Etot*part1._x );
-            //TLorentzVector vec2(0, 0,-Etot*part2._x,Etot*part2._x );
-            //TLorentzVector vecW=vec1+vec2;
             TLorentzVector vecW(0,0,Etot*part1._x-Etot*part2._x,Etot*part1._x+Etot*part2._x);
             //cout<<vecW.Px()<<" "<<vecW.E()<<endl;
             if (vecW.E()>=75){
@@ -85,27 +97,38 @@ void project(){ // function with the same name as the .C file is automatically e
 
                         //decay into stuff
                         //electron
-                        double x=acos(2*rng.Uniform(0,1)-1);
-                        double E=vecW.E()/2;
-                        double P=sqrt(E*E-emass*emass);
-                        //double P=sqrt(E*E-0.1*0.1);
-                        TLorentzVector veca(0, P*sin(x),P*cos(x),E );
-                        TLorentzVector vecb(0, -P*sin(x),-P*cos(x),E );
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        E=vecW.E()/2;
+                        E1=rng.Gaus(E, res(E));
+                        P1=sqrt(E1*E1-emass*emass);
+                        E2=rng.Gaus(E, res(E));
+                        P2=sqrt(E2*E2-emass*emass);
+
+                        TLorentzVector veca(0, P1*sin(x),P1*cos(x),E1 );
+                        TLorentzVector vecb(0, -P2*sin(x),-P2*cos(x),E2 );
 
                         veca.Boost(boost);
                         vecb.Boost(boost);
-                        histoZ->Fill(veca.Rapidity());
-                        histoZ->Fill(vecb.Rapidity());
+                        if(P_trans(veca)>=lowPT){
+                            histoZ->Fill(veca.PseudoRapidity());}
+                        if(P_trans(vecb)>=lowPT){
+                            histoZ->Fill(vecb.PseudoRapidity());}
                         //muon
                         x=acos(2*rng.Uniform(0,1)-1);
-                        P=sqrt(E*E-mumass*mumass);
-                        veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
-                        vecb=TLorentzVector(0, -P*sin(x),-P*cos(x),E );
+                        E1=rng.Gaus(E, res(E));
+                        P1=sqrt(E1*E1-mumass*mumass);
+                        E2=rng.Gaus(E, res(E));
+                        P2=sqrt(E2*E2-mumass*mumass);
+
+                        veca=TLorentzVector(0, P1*sin(x),P1*cos(x),E1 );
+                        vecb=TLorentzVector(0, -P2*sin(x),-P2*cos(x),E2 );
 
                         veca.Boost(boost);
                         vecb.Boost(boost);
-                        histoZb->Fill(veca.Rapidity());
-                        histoZb->Fill(vecb.Rapidity());
+                        if(P_trans(veca)>=lowPT){
+                            histoZb->Fill(veca.PseudoRapidity());}
+                        if(P_trans(vecb)>=lowPT){
+                            histoZb->Fill(vecb.PseudoRapidity());}
 
 
                     }
@@ -121,25 +144,29 @@ void project(){ // function with the same name as the .C file is automatically e
 
                         //decay into stuff
                         //electron
-                        double x=acos(2*rng.Uniform(0,1)-1);
-                        double E=(vecW.E()*vecW.E()+emass*emass)/(2*vecW.E());
-                        double P=sqrt(E*E-emass*emass);
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        E=(vecW.E()*vecW.E()+emass*emass)/(2*vecW.E());
+                        E=rng.Gaus(E, res(E));
+                        P=sqrt(E*E-emass*emass);
                         TLorentzVector veca(0, P*sin(x),P*cos(x),E );
-                        veca.Boost(boost);;
-                        histoWp->Fill(veca.Rapidity());
+                        veca.Boost(boost);
+                        if(P_trans(veca)>=lowPT){
+                            histoWp->Fill(veca.PseudoRapidity());}
                         /*//second electron
                         x=acos(2*rng.Uniform(0,1)-1);
                         veca=TLorentzVector (0, P*sin(x),P*cos(x),E );
 
                         veca.Boost(boost);;
-                        histoWp->Fill(veca.PseudoRapidity());*/
+                        histoWp->Fill(veca.PseudoPseudoRapidity());*/
                         //muon
                         x=acos(2*rng.Uniform(0,1)-1);
                         E=(vecW.E()*vecW.E()+mumass*mumass)/(2*vecW.E());
+                        E=rng.Gaus(E, res(E));
                         P=sqrt(E*E-mumass*mumass);
                         veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
                         veca.Boost(boost);
-                        histoWpb->Fill(veca.Rapidity());
+                        if(P_trans(veca)>=lowPT){
+                            histoWpb->Fill(veca.PseudoRapidity());}
                     }
                 }else if((part1._type=="AUp" && part2._type=="Down")||(part1._type=="Down" && part2._type=="AUp")){
                     if (M>=80.385){
@@ -152,25 +179,29 @@ void project(){ // function with the same name as the .C file is automatically e
 
                         //decay into stuff
                         //electron
-                        double x=acos(2*rng.Uniform(0,1)-1);
-                        double E=(vecW.E()*vecW.E()+emass*emass)/(2*vecW.E());
-                        double P=sqrt(E*E-emass*emass);
+                        x=acos(2*rng.Uniform(0,1)-1);
+                        E=(vecW.E()*vecW.E()+emass*emass)/(2*vecW.E());
+                        E=rng.Gaus(E, res(E));
+                        P=sqrt(E*E-emass*emass);
                         TLorentzVector veca(0, P*sin(x),P*cos(x),E );
                         veca.Boost(boost);;
-                        histoWm->Fill(veca.Rapidity());
+                        if(P_trans(veca)>=lowPT){
+                            histoWm->Fill(veca.PseudoRapidity());}
                         /*//second
                         x=acos(2*rng.Uniform(0,1)-1);
                         veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
                         veca.Boost(boost);;
-                        histoWm->Fill(veca.PseudoRapidity());*/
+                        histoWm->Fill(veca.PseudoPseudoRapidity());*/
                         //muon
                         x=acos(2*rng.Uniform(0,1)-1);
                         E=(vecW.E()*vecW.E()+mumass*mumass)/(2*vecW.E());
+                        E=rng.Gaus(E, res(E));
                         P=sqrt(E*E-mumass*mumass);
                         veca=TLorentzVector(0, P*sin(x),P*cos(x),E );
 
                         veca.Boost(boost);
-                        histoWmb->Fill(veca.Rapidity());
+                        if(P_trans(veca)>=lowPT){
+                            histoWmb->Fill(veca.PseudoRapidity());}
                     }
                 }
             }
@@ -228,9 +259,9 @@ void project(){ // function with the same name as the .C file is automatically e
     histoWp->SetMinimum(0);
     cwp->Update();
     cout<<"Z="<<z<<" Wmin="<<wm<<" Wplus="<<wp<<endl;
-    TH1D *ass = new TH1D("ass","electron",30,-10,10);
-    TH1D *ass_sub = new TH1D("ass_sub","electron",30,-10,10);
-    TH1D *ass_sum = new TH1D("ass_sum","electron",30,-10,10);
+    TH1D *ass = new TH1D("ass","electron",30,-limit,limit);
+    TH1D *ass_sub = new TH1D("ass_sub","electron",30,-limit,limit);
+    TH1D *ass_sum = new TH1D("ass_sum","electron",30,-limit,limit);
     ass_sub->Add(histoWm, histoWp,-1,1);
     ass_sum->Add(histoWm, histoWp,1,1);
     ass->Divide(ass_sub, ass_sum);
@@ -238,9 +269,9 @@ void project(){ // function with the same name as the .C file is automatically e
     ass->Draw();
     ass->SetMinimum(0);
     c1->Update();
-    TH1D *assb = new TH1D("assb","muon",30,-10,10);
-    TH1D *assb_sub = new TH1D("assb_sub","muon",30,-10,10);
-    TH1D *assb_sum = new TH1D("assb_sum","muon",30,-10,10);
+    TH1D *assb = new TH1D("assb","muon",30,-limit,limit);
+    TH1D *assb_sub = new TH1D("assb_sub","muon",30,-limit,limit);
+    TH1D *assb_sum = new TH1D("assb_sum","muon",30,-limit,limit);
     assb_sub->Add(histoWmb, histoWpb,-1,1);
     assb_sum->Add(histoWmb, histoWpb,1,1);
     assb->Divide(assb_sub, assb_sum);
@@ -248,11 +279,20 @@ void project(){ // function with the same name as the .C file is automatically e
     assb->Draw();
     assb->SetMinimum(0);
     c2->Update();
+    gBenchmark->Show("fillrandom");
 }
 //cross section
 double sigma(){
     //to be filled in
     return 1.0;
+}
+
+inline double res(double E){
+    return (0.028/sqrt(E)+0.12/E+0.3)*E;
+}
+
+inline double P_trans(TLorentzVector v){
+    return sqrt( v.Px()*v.Px() +v.Py()*v.Py() );
 }
 
 Parton make_parton(double fmax){
@@ -266,7 +306,7 @@ Parton make_parton(double fmax){
     double fGluon = histos.histoGluon->GetBinContent(xbin,ybin);
 
     double f=rng.Uniform(0,fmax);
-    if(f>=fAUp+fUp+fADown+fDown+fGluon){
+    /*if(f>=fAUp+fUp+fADown+fDown+fGluon){
         return make_parton(fmax);
     }else if(f>=fAUp+fUp+fADown+fDown){
         return Parton(x,"Gluon");
@@ -278,6 +318,42 @@ Parton make_parton(double fmax){
         return Parton(x,"Up");
     }else{
         return Parton(x,"AUp");
+    }*/
+
+    if(f>=fAUp+fUp+fADown+fDown+fGluon){
+        //failed rejection
+        return make_parton(fmax);
+    }else if(f>=fAUp+fUp+fADown+fDown){
+        //ignore gluons
+        return make_parton(fmax);
+    }else if(f>=fAUp+fUp+fADown){
+        if(previous_anti==0){
+            return make_parton(fmax);
+        }else{
+            previous_anti=0;
+            return Parton(x,"Down");
+        }
+    }else if(f>=fAUp+fADown){
+        if(previous_anti==0){
+            return make_parton(fmax);
+        }else{
+            previous_anti=0;
+            return Parton(x,"Up");
+        }
+    }else if(f>=fAUp){
+        if(previous_anti==1){
+            return make_parton(fmax);
+        }else{
+            previous_anti=1;
+            return Parton(x,"ADown");
+        }
+    }else{
+        if(previous_anti==1){
+            return make_parton(fmax);
+        }else{
+            previous_anti=1;
+            return Parton(x,"AUp");
+        }
     }
 }
 
